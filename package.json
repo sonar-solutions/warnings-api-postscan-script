@@ -1,0 +1,19 @@
+
+{
+  "comments": {
+    "----": "Make sure that you have 'pkg' installed globally to run the build script. You can install it using 'npm install -g pkg'."
+  },
+  "dependencies": {
+    "csv-writer": "^1.6.0"
+  },
+  "scripts": {
+  "start": "node index.js",
+  "build": "rm -rf dist && pkg index.js --out-path dist --targets node18-linux-x64,node18-linux-arm64,node18-macos-x64,node18-macos-arm64,node18-win-x64,node18-win-arm64"
+  },
+  "bin": "index.js",
+  "pkg": {
+    "scripts": "index.js",
+    "assets": [],
+    "outputPath": "dist"
+  }
+}
