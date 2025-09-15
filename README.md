@@ -1,16 +1,25 @@
-# warnings-api-postscan-script
 
-This repository contains a Node.js script for post-scan processing of warnings from an API.
+# Warnings API Post-Scan Script
+
+This repository contains a Node.js script and cross-platform binary for post-scan processing of warnings from SonarQube APIs. It collects warnings for one or all projects and outputs them to a CSV file for further analysis or reporting.
+
+---
 
 ## Features
-- Processes API warnings after scans
-- Configurable via `config.json`
+- Fetches warnings from SonarQube for a single project or all projects
+- Outputs warnings to a CSV file with project key, warning key, message, and dismissable status
+- Supports both HTTP and HTTPS SonarQube endpoints
+- Can be run as a Node.js script or as a standalone binary for major platforms
+- Easy configuration via `config.json`
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js (v14 or higher recommended)
 - npm
+- [pkg](https://www.npmjs.com/package/pkg) (for building binaries)
 
 ### Installation
 1. Clone the repository:
@@ -23,16 +32,46 @@ This repository contains a Node.js script for post-scan processing of warnings f
    npm install
    ```
 
-### Usage
-Run the script:
+---
+
+## Configuration
+
+Edit `config.json` to set up your SonarQube connection and output file:
+
+```json
+{
+  "SONARQUBE_URL": "http://localhost:9091",
+  "SONARQUBE_TOKEN": "your-sonarqube-token",
+  "CSV_FILE": "sonarqube_warnings.csv",
+  "PROJECT_NAME": "" // Leave blank to fetch warnings for ALL projects
+}
+```
+
+- `SONARQUBE_URL`: The base URL of your SonarQube server (http or https)
+- `SONARQUBE_TOKEN`: Your SonarQube API token
+- `CSV_FILE`: Output CSV file name
+- `PROJECT_NAME`: The key of the project to fetch warnings for. Leave blank to fetch warnings for all projects.
+
+---
+
+## Usage
+
+### Run as Node.js Script
+
+Build and run:
 ```bash
 npm run build
 node index.js
 ```
 
-### Running the Packaged Binary
+Or simply:
+```bash
+npm start
+```
 
-After building, you will find platform-specific binaries in the `dist/` folder:
+### Run as Packaged Binary
+
+After building (`npm run build`), platform-specific binaries are available in the `dist/` folder:
 
 - **macOS (Apple Silicon):** `./dist/index-macos-arm64`
 - **macOS (Intel):** `./dist/index-macos-x64`
@@ -41,22 +80,57 @@ After building, you will find platform-specific binaries in the `dist/` folder:
 - **Windows (x64):** `./dist/index-win-x64.exe`
 - **Windows (ARM64):** `./dist/index-win-arm64.exe`
 
-To run the binary, use the appropriate file for your platform. For example, on macOS (Apple Silicon):
-
+Run the binary for your platform. Example (macOS Apple Silicon):
 ```bash
 ./dist/index-macos-arm64
 ```
-
-On Windows:
-
+Example (Windows):
 ```powershell
 .\dist\index-win-x64.exe
 ```
 
-Make sure your `config.json` is present in the same directory as the binary or provide the correct path.
+**Note:** Ensure `config.json` is present in the same directory as the binary or provide the correct path.
 
-## Configuration
-Edit `config.json` to set up your API keys and other settings.
+---
+
+## Output
+
+The script/binary generates a CSV file (default: `sonarqube_warnings.csv`) with the following columns:
+
+- `Project Key`: SonarQube project key
+- `Key`: Unique warning key
+- `Message`: Warning message
+- `Dismissable`: Whether the warning is dismissable (true/false)
+
+Example output:
+```csv
+Project Key,Key,Message,Dismissable
+darren-sample-project-scan,ef2f937d-7e84-4ba1-8d29-786c4c7435aa,"SCM provider autodetection failed...",false
+project-b-express-api-backend,fc856c26-4f44-48fa-9ecb-16b0a7070803,"Missing blame information for 2 files...",false
+...etc
+```
+
+---
+
+## Troubleshooting
+
+- Ensure your SonarQube server is running and accessible at the URL in `config.json`
+- Ensure your API token is valid and has sufficient permissions
+- If the CSV is empty, check console output for errors or warnings
+- For debugging, add `console.log` statements in `index.js` to inspect API responses
+- If you see protocol errors, verify that your `SONARQUBE_URL` starts with `http://` or `https://`
+
+---
+
+## Advanced
+
+- To fetch warnings for a specific project, set `PROJECT_NAME` in `config.json` to the desired project key
+- To fetch warnings for all projects, leave `PROJECT_NAME` blank
+- You can customize the output CSV file name via `CSV_FILE`
+- The script can be extended to filter or process warnings further as needed
+
+---
 
 ## License
-MIT
+
+MIT License. See [LICENSE](LICENSE) for details.
