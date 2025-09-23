@@ -1,19 +1,52 @@
 
 {
-  "comments": {
-    "----": "Make sure that you have 'pkg' installed globally to run the build script. You can install it using 'npm install -g pkg'."
+  "name": "warnings-api-postscan-script",
+  "version": "1.0.0",
+  "description": "Node.js script and binary for post-scan processing of SonarQube warnings, outputting to CSV.",
+  "main": "index.js",
+  "bin": {
+    "warnings-api-postscan-script": "index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "build": "rm -rf dist && pkg index.js --out-path dist --targets node18-linux-x64,node18-linux-arm64,node18-macos-x64,node18-macos-arm64,node18-win-x64,node18-win-arm64"
+  },
+  "author": "Joshua Quek",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sonar-solutions/warnings-api-postscan-script.git"
+  },
+  "keywords": [
+    "sonarqube",
+    "warnings",
+    "csv",
+    "postscan",
+    "api",
+    "script",
+    "nodejs"
+  ],
+  "engines": {
+    "node": ">=14"
   },
   "dependencies": {
     "csv-writer": "^1.6.0"
   },
-  "scripts": {
-  "start": "node index.js",
-  "build": "rm -rf dist && pkg index.js --out-path dist --targets node18-linux-x64,node18-linux-arm64,node18-macos-x64,node18-macos-arm64,node18-win-x64,node18-win-arm64"
-  },
-  "bin": "index.js",
   "pkg": {
     "scripts": "index.js",
-    "assets": [],
+    "assets": [
+      "config.json"
+    ],
     "outputPath": "dist"
-  }
+  },
+  "files": [
+    "index.js",
+    "config.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "bugs": {
+    "url": "https://github.com/sonar-solutions/warnings-api-postscan-script/issues"
+  },
+  "homepage": "https://github.com/sonar-solutions/warnings-api-postscan-script#readme"
 }

@@ -21,6 +21,11 @@ This repository contains a Node.js script and cross-platform binary for post-sca
 - npm
 - [pkg](https://www.npmjs.com/package/pkg) (for building binaries)
 
+Note: Make sure to have `pkg` installed globally if you plan to build the binaries:
+```bash
+npm install -g pkg
+```
+
 ### Installation
 1. Clone the repository:
    ```bash
