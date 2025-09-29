@@ -1,3 +1,30 @@
+// Check SonarQube connectivity before making API calls
+async function checkSonarQubeConnection() {
+    return new Promise((resolve) => {
+        const url = `${SONARQUBE_URL}/api/system/status`;
+        const options = {
+            headers: {
+                'Authorization': `Basic ${Buffer.from(SONARQUBE_TOKEN + ':').toString('base64')}`
+            }
+        };
+        const client = url.startsWith('https') ? https : http;
+        client.get(url, options, (res) => {
+            let data = '';
+            res.on('data', chunk => { data += chunk; });
+            res.on('end', () => {
+                if (res.statusCode === 200) {
+                    resolve(true);
+                } else {
+                    console.error(`SonarQube responded with status ${res.statusCode}: ${data}`);
+                    resolve(false);
+                }
+            });
+        }).on('error', (err) => {
+            console.error('Error connecting to SonarQube:', err.message);
+            resolve(false);
+        });
+    });
+}
 // Required package: csv-writer
 // Install with: npm install csv-writer
 
@@ -11,9 +38,9 @@ const https = require('https');
 const http = require('http');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 
-async function fetchAnalysisStatus(projectKey) {
+async function fetchAnalysisStatus(projectKey, branch) {
     return new Promise((resolve, reject) => {
-        const url = `${SONARQUBE_URL}/api/ce/analysis_status?component=${projectKey}&projectName=${projectKey}`;
+        const url = `${SONARQUBE_URL}/api/ce/analysis_status?component=${projectKey}${branch ? `&branch=${encodeURIComponent(branch)}` : ''}`;
         const options = {
             headers: {
                 'Authorization': `Basic ${Buffer.from(SONARQUBE_TOKEN + ':').toString('base64')}`
@@ -34,6 +61,36 @@ async function fetchAnalysisStatus(projectKey) {
         }).on('error', (err) => {
             console.error('Error fetching analysis status:', err.message);
             resolve(null);
+        });
+    });
+}
+// Fetch all branches for a given project
+async function fetchAllBranches(projectKey) {
+    return new Promise((resolve, reject) => {
+        const url = `${SONARQUBE_URL}/api/project_branches/list?project=${projectKey}`;
+        const options = {
+            headers: {
+                'Authorization': `Basic ${Buffer.from(SONARQUBE_TOKEN + ':').toString('base64')}`
+            }
+        };
+        const client = url.startsWith('https') ? https : http;
+        client.get(url, options, (res) => {
+            let data = '';
+            res.on('data', chunk => { data += chunk; });
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    // SonarQube returns 'branches' array
+                    const branches = parsed.branches ? parsed.branches.map(b => b.name) : [];
+                    resolve(branches);
+                } catch (err) {
+                    console.error('Error parsing branches response:', err.message);
+                    resolve([]);
+                }
+            });
+        }).on('error', (err) => {
+            console.error('Error fetching branches:', err.message);
+            resolve([]);
         });
     });
 }
@@ -86,6 +143,7 @@ async function writeWarningsToCsv(warnings) {
         path: CSV_FILE,
         header: [
             {id: 'projectKey', title: 'Project Key'},
+            {id: 'branch', title: 'Branch'},
             {id: 'key', title: 'Key'},
             {id: 'text', title: 'Message'},
             {id: 'dismissable', title: 'Dismissable'}
@@ -95,21 +153,51 @@ async function writeWarningsToCsv(warnings) {
     console.log(`Wrote ${warnings.length} warnings to ${CSV_FILE}`);
 }
 
+
+
 (async () => {
+    const reachable = await checkSonarQubeConnection();
+    if (!reachable) {
+        console.error('ERROR: Unable to connect to SonarQube at', SONARQUBE_URL);
+        console.error('Please check that SonarQube is running and the URL/token in config.json are correct.');
+        process.exit(1);
+    }
     let allWarnings = [];
     const projectKey = config.PROJECT_NAME || '';
     if (projectKey.trim() === '') {
         const projectKeys = await fetchAllProjectKeys();
         for (const key of projectKeys) {
-            const data = await fetchAnalysisStatus(key);
-            const warnings = extractWarnings(data);
-            console.log(`Project ${key} warnings:`, warnings);
-            allWarnings = allWarnings.concat(warnings);
+            const branches = await fetchAllBranches(key);
+            if (branches.length === 0) {
+                // If no branches, fetch without branch param
+                const data = await fetchAnalysisStatus(key, '');
+                const warnings = extractWarnings(data);
+                console.log(`Project ${key} (no branches) warnings:`, warnings);
+                allWarnings = allWarnings.concat(warnings);
+            } else {
+                for (const branch of branches) {
+                    const data = await fetchAnalysisStatus(key, branch);
+                    const warnings = extractWarnings(data);
+                    console.log(`Project ${key} branch ${branch} warnings:`, warnings);
+                    // Add branch info to each warning
+                    allWarnings = allWarnings.concat(warnings.map(w => ({ ...w, branch })));
+                }
+            }
         }
     } else {
-        const data = await fetchAnalysisStatus(projectKey);
-        allWarnings = extractWarnings(data);
-        console.log(`Project ${projectKey} warnings:`, allWarnings);
+        const branches = await fetchAllBranches(projectKey);
+        if (branches.length === 0) {
+            const data = await fetchAnalysisStatus(projectKey, '');
+            allWarnings = extractWarnings(data);
+            console.log(`Project ${projectKey} (no branches) warnings:`, allWarnings);
+        } else {
+            for (const branch of branches) {
+                const data = await fetchAnalysisStatus(projectKey, branch);
+                const warnings = extractWarnings(data);
+                console.log(`Project ${projectKey} branch ${branch} warnings:`, warnings);
+                allWarnings = allWarnings.concat(warnings.map(w => ({ ...w, branch })));
+            }
+        }
     }
     await writeWarningsToCsv(allWarnings);
 })();
