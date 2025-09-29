@@ -1,13 +1,16 @@
 
+
 # Warnings API Post-Scan Script
 
-This repository contains a Node.js script and cross-platform binary for post-scan processing of warnings from SonarQube APIs. It collects warnings for one or all projects and outputs them to a CSV file for further analysis or reporting.
+This repository provides a Node.js script and cross-platform binary for post-scan processing of warnings from SonarQube APIs. It collects warnings for every project and every branch, outputting them to a CSV file for analysis or reporting.
 
 ---
 
 ## Features
-- Fetches warnings from SonarQube for a single project or all projects
-- Outputs warnings to a CSV file with project key, warning key, message, and dismissable status
+- Fetches warnings for **all projects** and **all branches** in SonarQube
+- Supports fetching for a single project (set `PROJECT_NAME` in `config.json`)
+- Outputs warnings to a CSV file with columns: Project Key, Branch, Key, Message, Dismissable
+- Checks SonarQube connectivity before running and provides clear error messages if unreachable
 - Supports both HTTP and HTTPS SonarQube endpoints
 - Can be run as a Node.js script or as a standalone binary for major platforms
 - Easy configuration via `config.json`
@@ -21,7 +24,7 @@ This repository contains a Node.js script and cross-platform binary for post-sca
 - npm
 - [pkg](https://www.npmjs.com/package/pkg) (for building binaries)
 
-Note: Make sure to have `pkg` installed globally if you plan to build the binaries:
+Install `pkg` globally if you plan to build binaries:
 ```bash
 npm install -g pkg
 ```
@@ -39,16 +42,17 @@ npm install -g pkg
 
 ---
 
+
 ## Configuration
 
 Edit `config.json` to set up your SonarQube connection and output file:
 
 ```json
 {
-  "SONARQUBE_URL": "http://localhost:9091",
-  "SONARQUBE_TOKEN": "your-sonarqube-token",
-  "CSV_FILE": "sonarqube_warnings.csv",
-  "PROJECT_NAME": "" // Leave blank to fetch warnings for ALL projects
+   "SONARQUBE_URL": "http://localhost:9091",
+   "SONARQUBE_TOKEN": "your-sonarqube-token",
+   "CSV_FILE": "sonarqube_warnings.csv",
+   "PROJECT_NAME": "" // Leave blank to fetch warnings for ALL projects
 }
 ```
 
@@ -58,6 +62,7 @@ Edit `config.json` to set up your SonarQube connection and output file:
 - `PROJECT_NAME`: The key of the project to fetch warnings for. Leave blank to fetch warnings for all projects.
 
 ---
+
 
 ## Usage
 
@@ -98,43 +103,58 @@ Example (Windows):
 
 ---
 
+
 ## Output
 
 The script/binary generates a CSV file (default: `sonarqube_warnings.csv`) with the following columns:
 
 - `Project Key`: SonarQube project key
+- `Branch`: Branch name (if available)
 - `Key`: Unique warning key
 - `Message`: Warning message
 - `Dismissable`: Whether the warning is dismissable (true/false)
 
 Example output:
 ```csv
-Project Key,Key,Message,Dismissable
-darren-sample-project-scan,ef2f937d-7e84-4ba1-8d29-786c4c7435aa,"SCM provider autodetection failed...",false
-project-b-express-api-backend,fc856c26-4f44-48fa-9ecb-16b0a7070803,"Missing blame information for 2 files...",false
+Project Key,Branch,Key,Message,Dismissable
+darren-sample-project-scan,main,ef2f937d-7e84-4ba1-8d29-786c4c7435aa,"SCM provider autodetection failed...",false
+project-b-express-api-backend,feature-xyz,fc856c26-4f44-48fa-9ecb-16b0a7070803,"Missing blame information for 2 files...",false
 ...etc
 ```
 
 ---
 
+
 ## Troubleshooting
 
-- Ensure your SonarQube server is running and accessible at the URL in `config.json`
-- Ensure your API token is valid and has sufficient permissions
-- If the CSV is empty, check console output for errors or warnings
-- For debugging, add `console.log` statements in `index.js` to inspect API responses
-- If you see protocol errors, verify that your `SONARQUBE_URL` starts with `http://` or `https://`
+- **SonarQube not reachable:**
+   - The script checks connectivity before running. If unreachable, you'll see:
+      ```
+      ERROR: Unable to connect to SonarQube at [SONARQUBE_URL]
+      Please check that SonarQube is running and the URL/token in config.json are correct.
+      ```
+- **Empty CSV output:**
+   - Ensure your SonarQube server is running and accessible at the URL in `config.json`
+   - Ensure your API token is valid and has sufficient permissions
+   - Check console output for errors or warnings
+- **Protocol errors:**
+   - Verify that your `SONARQUBE_URL` starts with `http://` or `https://`
+- **Debugging:**
+   - Add `console.log` statements in `index.js` to inspect API responses
 
 ---
 
-## Advanced
 
-- To fetch warnings for a specific project, set `PROJECT_NAME` in `config.json` to the desired project key
-- To fetch warnings for all projects, leave `PROJECT_NAME` blank
-- You can customize the output CSV file name via `CSV_FILE`
-- The script can be extended to filter or process warnings further as needed
+## Advanced Usage
+
+- **Fetch warnings for a specific project:** Set `PROJECT_NAME` in `config.json` to the desired project key
+- **Fetch warnings for all projects:** Leave `PROJECT_NAME` blank
+- **Fetch warnings for all branches:** The script automatically fetches all branches for each project
+- **Customize output CSV file name:** Change `CSV_FILE` in `config.json`
+- **Extending the script:** You can modify `index.js` to filter, process, or export warnings in other formats as needed
 
 ---
+
 
 ## License
 
