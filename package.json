@@ -1,15 +1,14 @@
-
 {
   "name": "warnings-api-postscan-script",
-  "version": "1.0.0",
-  "description": "Node.js script and binary for post-scan processing of SonarQube warnings, outputting to CSV.",
+  "version": "2.0.0",
+  "description": "Zero-dependency Node.js script and binary for post-scan processing of SonarQube warnings, outputting to CSV.",
   "main": "index.js",
   "bin": {
     "warnings-api-postscan-script": "index.js"
   },
   "scripts": {
     "start": "node index.js",
-    "build": "rm -rf dist && pkg index.js --out-path dist --targets node18-linux-x64,node18-linux-arm64,node18-macos-x64,node18-macos-arm64,node18-win-x64,node18-win-arm64"
+    "build": "bash build.sh"
   },
   "author": "Joshua Quek",
   "license": "MIT",
@@ -27,21 +26,13 @@
     "nodejs"
   ],
   "engines": {
-    "node": ">=14"
-  },
-  "dependencies": {
-    "csv-writer": "^1.6.0"
-  },
-  "pkg": {
-    "scripts": "index.js",
-    "assets": [
-      "config.json"
-    ],
-    "outputPath": "dist"
+    "node": ">=20"
   },
   "files": [
     "index.js",
     "config.json",
+    "build.sh",
+    "sea-config.json",
     "README.md",
     "LICENSE"
   ],

@@ -39,3 +39,7 @@ jspm_packages/
 config.json
 sonarqube_warnings.csv
 archives/
+
+# Node SEA build artifacts
+sea-prep.blob
+sea-config-build.json

@@ -1,4 +1,14 @@
-// Check SonarQube connectivity before making API calls
+const fs = require('node:fs');
+const path = require('node:path');
+const https = require('node:https');
+const http = require('node:http');
+
+const configPath = path.resolve(process.cwd(), 'config.json');
+const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+const SONARQUBE_URL = config.SONARQUBE_URL;
+const SONARQUBE_TOKEN = config.SONARQUBE_TOKEN;
+const CSV_FILE = config.CSV_FILE;
+
 async function checkSonarQubeConnection() {
     return new Promise((resolve) => {
         const url = `${SONARQUBE_URL}/api/system/status`;
@@ -25,18 +35,6 @@ async function checkSonarQubeConnection() {
         });
     });
 }
-// Required package: csv-writer
-// Install with: npm install csv-writer
-
-const fs = require('fs');
-const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
-const SONARQUBE_URL = config.SONARQUBE_URL;
-const SONARQUBE_TOKEN = config.SONARQUBE_TOKEN;
-const CSV_FILE = config.CSV_FILE;
-
-const https = require('https');
-const http = require('http');
-const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 
 async function fetchAnalysisStatus(projectKey, branch) {
     return new Promise((resolve, reject) => {
@@ -138,18 +136,22 @@ function extractWarnings(data) {
     }));
 }
 
-async function writeWarningsToCsv(warnings) {
-    const csvWriter = createCsvWriter({
-        path: CSV_FILE,
-        header: [
-            {id: 'projectKey', title: 'Project Key'},
-            {id: 'branch', title: 'Branch'},
-            {id: 'key', title: 'Key'},
-            {id: 'text', title: 'Message'},
-            {id: 'dismissable', title: 'Dismissable'}
-        ]
-    });
-    await csvWriter.writeRecords(warnings);
+function escapeCsvField(value) {
+    const str = String(value ?? '');
+    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+}
+
+function writeWarningsToCsv(warnings) {
+    const headers = ['Project Key', 'Branch', 'Key', 'Message', 'Dismissable'];
+    const fields = ['projectKey', 'branch', 'key', 'text', 'dismissable'];
+    const lines = [headers.join(',')];
+    for (const row of warnings) {
+        lines.push(fields.map(f => escapeCsvField(row[f])).join(','));
+    }
+    fs.writeFileSync(CSV_FILE, lines.join('\n') + '\n', 'utf8');
     console.log(`Wrote ${warnings.length} warnings to ${CSV_FILE}`);
 }
 
@@ -199,5 +201,5 @@ async function writeWarningsToCsv(warnings) {
             }
         }
     }
-    await writeWarningsToCsv(allWarnings);
+    writeWarningsToCsv(allWarnings);
 })();
