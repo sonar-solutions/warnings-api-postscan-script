@@ -8,7 +8,7 @@ echo "Detected Node.js $(node --version) (major: $NODE_MAJOR)"
 
 mkdir -p dist
 
-if [ "$NODE_MAJOR" -ge 25 ]; then
+if [[ "$NODE_MAJOR" -ge 25 ]]; then
     echo "Using --build-sea (Node v25.5+)..."
 
     OS="$(uname -s)"
@@ -42,7 +42,7 @@ EOF
     node --build-sea sea-config-build.json
     rm -f sea-config-build.json
 
-    if [ "$(uname -s)" = "Darwin" ]; then
+    if [[ "$(uname -s)" = "Darwin" ]]; then
         codesign --sign - "$OUTPUT" 2>/dev/null || echo "Warning: codesign failed (ad-hoc signing). Binary may still work."
     fi
 
@@ -72,14 +72,14 @@ else
 
     cp "$(command -v node)" "$OUTPUT"
 
-    if [ "$(uname -s)" = "Darwin" ]; then
+    if [[ "$(uname -s)" = "Darwin" ]]; then
         codesign --remove-signature "$OUTPUT" 2>/dev/null || true
     fi
 
     npx --yes postject "$OUTPUT" NODE_SEA_BLOB sea-prep.blob \
         --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6
 
-    if [ "$(uname -s)" = "Darwin" ]; then
+    if [[ "$(uname -s)" = "Darwin" ]]; then
         codesign --sign - "$OUTPUT" 2>/dev/null || echo "Warning: codesign failed (ad-hoc signing). Binary may still work."
     fi
 
