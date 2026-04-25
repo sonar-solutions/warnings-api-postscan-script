@@ -6,7 +6,7 @@
 Zero-dependency Node.js tool that fetches SonarQube warnings via API and exports them to CSV. Can run as a script or be compiled into a standalone binary using Node.js Single Executable Applications (SEA).
 
 ## Architecture
-<!-- updated: 2026-04-25_00:00:00 -->
+<!-- updated: 2026-04-25_19:00:00 -->
 
 Single-file Node.js application (`index.js`) using only built-in modules:
 - `node:fs` — file I/O (config reading, CSV writing)
@@ -14,6 +14,8 @@ Single-file Node.js application (`index.js`) using only built-in modules:
 - `node:http` / `node:https` — SonarQube API requests
 
 No third-party dependencies. CSV output is handled with native string construction and proper RFC 4180 escaping.
+
+Code structure uses a shared `httpGet()` helper to keep nesting depth under 4 levels and `collectWarningsForProject()` to keep cognitive complexity within SonarCloud thresholds.
 
 ## Build System
 <!-- updated: 2026-04-25_00:00:00 -->
